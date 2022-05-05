@@ -1,21 +1,34 @@
 package main
+
 import (
-  "net/http"
-  "time"
-  "encoding/json"
-) 
-type Time struct {
-  NowTime string `json:"time"`
-} 
+	"fmt"
+	"log"
+	"net/http"
+	"encoding/json"
+	"time"
+)
+
+func getTime(w http.ResponseWriter, req *http.Request) {
+	currentTime := time.Now()
+	timeWithTimestamp := currentTime.Format(time.RFC3339)
+	data := map[string]string{
+		"time": timeWithTimestamp,
+	}
+	b, err := json.MarshalIndent(data, "", " ")
+	if err != nil {
+		log.Fatal(err)
+	}
+	if req.Method == "GET" {
+		fmt.Fprintf(w, string(b))
+	} else {
+		fmt.Fprintf(w, "Sorry, only GET request is supported.")
+	}
+
 func main() {
-  const RFC3339 = "2006-01-02T15:04:05Z07:00" 
-  http.HandleFunc("/time", func(rw http.ResponseWriter, r *http.Request) {
-    now := time.Now()
-    formattedTime := now.Format(RFC3339) 
-    structTime := Time{formattedTime} 
-    data, _ := json.MarshalIndent(structTime, "", "\t")
-    rw.Write(data)
-  })
-  http.ListenAndServe(":8795", nil)
+	http.HandleFunc("/time", getTime)
+	fmt.Printf("Starting server on ")
+	if err := http.ListenAndServe(":8795", nil); err != nil {
+		log.Fatal(err)
+	}
 }
 
